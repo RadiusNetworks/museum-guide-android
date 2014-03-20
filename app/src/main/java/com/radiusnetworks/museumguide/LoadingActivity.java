@@ -190,6 +190,12 @@ public class LoadingActivity extends Activity {
         return validatingCode;
     }
 
+    public void setupLoadingView() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(LoadingActivity.this);
+        setContentView(R.layout.sh_activity_loading);
+        Log.d(TAG, "setting loading activity");
+    }
+
     public void codeValidationPassed() {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
@@ -200,9 +206,7 @@ public class LoadingActivity extends Activity {
         runOnUiThread(new Runnable() {
             public void run() {
                 LoadingActivity.this.findViewById(R.id.code).setEnabled(true);
-                final AlertDialog.Builder builder = new AlertDialog.Builder(LoadingActivity.this);
-                setContentView(R.layout.sh_activity_loading);
-                Log.d(TAG, "setting loading activity");
+                setupLoadingView();
             }
         });
     }

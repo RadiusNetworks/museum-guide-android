@@ -3,11 +3,18 @@
     android:id="@+id/mainLayout"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#3abeee"
+    android:background="#aecc79"
     android:gravity="center"
     tools:context=".LoadingActivity"
     android:focusable="true">
 
+    <ImageView
+        android:layout_alignParentTop="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/splashImage"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/splash_image" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -17,6 +24,7 @@
         android:text="Museum Guide"
         android:textColor="#FFFFFF"
         android:id="@+id/title2"
+        android:layout_below="@+id/splashImage"
         android:layout_marginTop="-10dp"
         android:textSize="34dp"
         android:layout_centerHorizontal="true" />
@@ -34,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="#CCCCFF"
+            android:textColor="#EEEEEE"
             android:text="Powered by "
             android:textSize="18dp"
             android:id="@+id/powered_by" />
@@ -45,44 +53,32 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="#ffffff"
             android:text="@string/rn_underline"
-            android:textSize="20dp"
+            android:textSize="18dp"
             android:id="@+id/attribution"
             android:layout_toRightOf="@+id/powered_by" />
 
     </RelativeLayout>
 
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="#ffffff"
-        android:text="HOW IT WORKS: walk to each exhibit in the museum, and you will be shown information about each item."
-        android:textSize="14dp"
-        android:id="@+id/instructions"
-        android:paddingTop="20dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="20dp"
-        android:layout_below="@+id/attributionContainer" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start"
-        android:id="@+id/button"
+        android:id="@+id/sh_start_button"
         android:width="100dp"
+        android:layout_marginTop="20dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
         android:background="#ffffff"
         android:textColor="#000000"
-        android:layout_below="@+id/instructions"
+        android:layout_below="@+id/attributionContainer"
         android:layout_centerHorizontal="true" />
 
 
-    <!-- dialog -->
+
     <RelativeLayout
-        android:id="@+id/dialog"
+        android:id="@+id/validating_dialog"
         android:layout_width="350dp"
         android:layout_height="350dp"
         android:gravity="center"
@@ -103,13 +99,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Loading Images"
+            android:text="Validating Code"
             android:textSize="30dp"
             android:id="@+id/loading_message"
             android:paddingBottom="20dp"
             android:layout_centerHorizontal="true"
-            android:textColor="#ffffff"
-            android:onClick="onHelpTapped" />
+            android:textColor="#ffffff" />
 
         <ProgressBar
             style="?android:attr/progressBarStyleLarge"
@@ -121,6 +116,7 @@
 
 
     </RelativeLayout>
+
 
 
 

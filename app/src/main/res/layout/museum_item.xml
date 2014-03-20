@@ -8,30 +8,39 @@
     tools:context=".LoadingActivity"
     android:focusable="true">
 
-    <ImageView
-        android:layout_width="fill_parent"
-        android:layout_height="250dp"
-        android:id="@+id/imageView"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="2dp"
-        android:layout_marginRight="2dp"
-        android:layout_marginTop="2dp"
-        android:src="@drawable/sh_museum_item_image_background"/>
+    <View android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#e0e0e0"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:id="@+id/topRule"/>
 
     <ImageView
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
-        android:layout_height="250dp"
+        android:layout_height="200dp"
         android:id="@+id/museumItemImage"
-        android:layout_alignTop="@+id/imageView"
+        android:layout_below="@+id/topRule"
         android:src="@drawable/ic_launcher" />
+
+    <View android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#e0e0e0"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_below="@id/museumItemImage"
+        android:id="@+id/bottomRule"/>
 
 
     <WebView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/webView"
-        android:layout_below="@+id/imageView"
+        android:layout_below="@+id/bottomRule"
         android:layout_marginLeft="2dp"
         android:layout_marginRight="2dp"
         android:layout_marginTop="2dp" />
@@ -41,9 +50,12 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Item Nearby >>"
-        android:background="#222222"
+        android:background="#aecc79"
         android:id="@+id/nextButton"
+        android:visibility="invisible"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
+
+
 
 </RelativeLayout>

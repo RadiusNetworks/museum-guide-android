@@ -24,6 +24,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.EditText;
 
 import com.radiusnetworks.ibeacon.IBeacon;
 import com.radiusnetworks.ibeacon.IBeaconData;
@@ -44,9 +45,9 @@ import java.util.Map;
 /**
  * Created by dyoung on 1/24/14.
  *
- * This is the central application class for the Scavenger Hunt.  It is responsible for:
- * 1. Initializing ProxomityKit, which downloads all the iBeacons associated with the hunt
- *    along with their configured hunt_id values and image_url values.  It then starts
+ * This is the central application class for the Museum Guide.  It is responsible for:
+ * 1. Initializing ProxomityKit, which downloads all the iBeacons associated with the museum
+ *    along with their configured item_id values and image_url values.  It then starts
  *    ranging and monitoring for these iBeacons, and will continue to do so even across
  *    a reboot.
  * 2. Downloads all the scavenger hunt badges ("target images") needed for both the found and
@@ -63,18 +64,17 @@ import java.util.Map;
 
 public class MuseumGuideApplication extends Application implements ProximityKitNotifier {
 
-    private static final String TAG = "ScavengerHuntApplication";
-    private static final Double MINIMUM_TRIGGER_DISTANCE_METERS = 10.0;
+    private static final String TAG = "MuseumGuideApplication";
     private ProximityKitManager manager;
-    private final long[] VIBRATOR_PATTERN = {0l, 500l, 0l}; // start immediately, vigrate for 500ms, sleep for 0ms
     @SuppressWarnings("unused")
     private BackgroundPowerSaver backgroundPowerSaver;
     private LoadingActivity loadingActivity = null;
-    private MuseumItemActivity museumItemActivity;
+    private MuseumItemsActivity museumItemsActivity;
     private RemoteAssetCache remoteAssetCache;
     private String loadingFailedTitle;
     private String loadingFailedMessage;
     private boolean codeNeeded;
+    private VisibleMuseumItems visibleMuseumItems = new VisibleMuseumItems();
     private Museum museum = null;
     int startCount = 0;
 
@@ -85,14 +85,26 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         backgroundPowerSaver = new BackgroundPowerSaver(this);
         manager = ProximityKitManager.getInstanceForApplication(this);
         manager.setNotifier(this);
+        manager.getIBeaconManager().LOG_DEBUG = true;
 
         if (!new PropertiesFile().exists()) {
-            this.codeNeeded = true;
-            return;
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+            String code = settings.getString("code", null);
+            if (code != null && !code.equals("")) {
+                Log.d(TAG, "Code is not needed because it is "+code);
+                startPk(code);
+            }
+            else {
+                Log.d(TAG, "Code is needed");
+                this.codeNeeded = true;
+                return;
+            }
         }
         else {
+            Log.d(TAG, "Code is not needed because we have a properties file");
             startPk(null);
         }
+
     }
 
     public void startPk(String code) {
@@ -124,8 +136,8 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         Intent i = new Intent(activity, LoadingActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(i);
-        if (this.museumItemActivity != null) {
-            this.museumItemActivity.finish();  // do this so it won't show up again on back press
+        if (this.museumItemsActivity != null) {
+            this.museumItemsActivity.finish();  // do this so it won't show up again on back press
         }
     }
 
@@ -158,6 +170,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
     }
 
 
+    private long lastNextMuseumItemRecalculationTime = 0l;
     @Override
     public void iBeaconDataUpdate(IBeacon iBeacon, IBeaconData iBeaconData, DataProviderException e) {
         // Called every second with data from ProximityKit when an iBeacon defined in ProximityKit is nearby
@@ -180,30 +193,15 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             return;
         }
         else {
-            // TAke the list of whatever museumItems are visible.  Find the one that is closest
-            // if no item is shown, show it.
-            // if another item is shown, display this item as the next one "UP NEXT: GANESH"
-
-            if (iBeacon.getAccuracy() < MINIMUM_TRIGGER_DISTANCE_METERS) {
-                Log.d(TAG, "found an item");
-                showMuseumItem(item);
+            visibleMuseumItems.detect(item, iBeacon.getAccuracy());
+            long now = new java.util.Date().getTime();
+            if (this.museumItemsActivity != null && now - lastNextMuseumItemRecalculationTime> 1000 /* 1 sec */) {
+                this.museumItemsActivity.recalculateNextItem(visibleMuseumItems);
+                lastNextMuseumItemRecalculationTime = now;
             }
-
         }
 
 
-    }
-
-    private void showMuseumItem(MuseumItem item) {
-        if (this.museumItemActivity == null) {
-            Intent i = new Intent(this, MuseumItemActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            i.getExtras().putString("item_id", item.getId());
-            startActivity(i);
-        }
-        else {
-            museumItemActivity.setNearestItem(item);
-        }
     }
 
     @Override
@@ -236,8 +234,9 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
 
         for (KitIBeacon iBeacon : manager.getKit().getIBeacons()) {
             String itemId = iBeacon.getAttributes().get("item_id");
+            String title = iBeacon.getAttributes().get("title");
             if (itemId != null) {
-                MuseumItem item = new MuseumItem(itemId);
+                MuseumItem item = new MuseumItem(itemId, title);
                 museumItems.add(item);
                 String imageUrl = iBeacon.getAttributes().get("image_url");
                 if (imageUrl == null) {
@@ -327,7 +326,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
 
         if (validateRequiredImagesPresent()) {
             // Yes, we have everything we need to start up.  Let's start the image activity with the first exhibit item
-            Intent i = new Intent(loadingActivity, MuseumItemActivity.class);
+            Intent i = new Intent(loadingActivity, MuseumItemsActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             i.putExtra("item_id", museum.getItemList().get(0).getId());
             startActivity(i);
@@ -339,16 +338,18 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         }
     }
 
-    public Museum getMuseum() {
-        return museum;
+    public VisibleMuseumItems getVisibleMuseumItems() {
+        return visibleMuseumItems;
     }
 
-    public MuseumItemActivity getMuseumItemActivity() {
-        return museumItemActivity;
+    public Museum getMuseum() { return museum; }
+
+    public MuseumItemsActivity getMuseumItemsActivity() {
+        return museumItemsActivity;
     }
 
-    public void setMuseumItemActivity(MuseumItemActivity museumItemActivity) {
-        this.museumItemActivity = museumItemActivity;
+    public void setMuseumItemsActivity(MuseumItemsActivity museumItemsActivity) {
+        this.museumItemsActivity = museumItemsActivity;
     }
 
 
@@ -382,12 +383,11 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
                 new NotificationCompat.Builder(this)
                         .setContentTitle("Museum Guide")
                         .setContentText("An exhibit item is nearby.")
-                        .setVibrate(VIBRATOR_PATTERN)
                         .setSmallIcon(R.drawable.ic_launcher);
 
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntent(new Intent(this, MuseumItemActivity.class));
+        stackBuilder.addNextIntent(new Intent(this, MuseumItemsActivity.class));
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(
                         0,
@@ -398,5 +398,8 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
                 (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, builder.build());
     }
+
+
+
 
 }

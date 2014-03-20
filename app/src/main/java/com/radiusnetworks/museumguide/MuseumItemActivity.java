@@ -28,16 +28,16 @@ public class MuseumItemActivity extends Activity {
     private static final String TAG = "MuseumItemActivity";
 
     private MuseumGuideApplication application;
-    Stack<String>itemStack = new Stack<String>();
-    String nextItemId = null;
-    String currentItemId = null;
+    private Stack<String>itemStack = new Stack<String>();
+    private String currentItemId = null;
+    private String nextItemId = null;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         application = (MuseumGuideApplication) this.getApplication();
-        application.setMuseumItemActivity(this);
+        //application.setMuseumItemsActivity(this);
 
         setContentView(R.layout.activity_museum_item);
         if (this.getIntent().getExtras() != null) {
@@ -47,7 +47,36 @@ public class MuseumItemActivity extends Activity {
             // TODO: load stack from preferences (should have saved off where you were)
             currentItemId = application.getMuseum().getItemList().get(0).getId();
         }
+
+        //findViewById(R.id.nearestButton).setOnClickListener(nearestItemClickListener);
+        findViewById(R.id.nextButton).setOnClickListener(nextItemClickListener);
+        findViewById(R.id.nextButton).setVisibility(View.INVISIBLE);
         showItem();
+    }
+
+    public void recalculateNextItem(VisibleMuseumItems visibleMuseumItems) {
+        String lastItemId = itemStack.empty()? null : itemStack.peek();
+        Log.d(TAG, "closest: ignoring "+lastItemId+" and "+currentItemId);
+        MuseumItem nextItem = visibleMuseumItems.calculateClosestItemWithExceptions(currentItemId, lastItemId);
+        showNextItem(nextItem == null ? null : nextItem.getId());
+    }
+
+    private void showNextItem(final String itemId) {
+        runOnUiThread(new Runnable() {
+            public void  run() {
+                if (itemId == null) {
+                    nextItemId = itemId;
+                    findViewById(R.id.nextButton).setVisibility(View.INVISIBLE);
+                    return;
+                }
+                else if (itemId.equals(nextItemId)) {
+                    Log.d(TAG, "Next item is unchanged.  Doing nothing");
+                }
+                findViewById(R.id.nextButton).setVisibility(View.VISIBLE);
+            }
+        });
+        nextItemId = itemId;
+
     }
 
     @Override
@@ -72,14 +101,42 @@ public class MuseumItemActivity extends Activity {
         return true;
     }
 
-    View.OnClickListener nextItemClickListener = new View.OnClickListener() {
+    View.OnClickListener nearestItemClickListener = new View.OnClickListener() {
         public void onClick(View view) {
+
             itemStack.push(currentItemId);
-            currentItemId = nextItemId;
-            nextItemId = null;
-            showItem();
+            MuseumItem closest = application.getVisibleMuseumItems().calculateClosestItem();
+            Log.d(TAG, "Closest item is "+closest);
+            if (closest != null) {
+                itemStack.push(currentItemId);
+                currentItemId = closest.getId();
+                showItem();
+                nextItemId = null;
+                showNextItem(null);
+            }
+            else {
+                // TODO: show a spinner here and try again
+            }
         }
     };
+
+    View.OnClickListener nextItemClickListener = new View.OnClickListener() {
+        public void onClick(View view) {
+            Log.d(TAG, "Tapping the next item");
+            if (nextItemId == null) {
+                Log.e(TAG, "nextItemId is null.  Button should not be visible");
+            }
+            else {
+                itemStack.push(nextItemId);
+                currentItemId = nextItemId;
+                nextItemId = null;
+                showItem();
+                showNextItem(nextItemId);
+            }
+
+        }
+    };
+
 
     @Override
     public void onBackPressed() {
@@ -91,27 +148,6 @@ public class MuseumItemActivity extends Activity {
             currentItemId = itemStack.pop();
             showItem();
         }
-    }
-
-
-    public void setNearestItem(MuseumItem item) {
-        final Button button = (Button) findViewById(R.id.nextbutton);
-        if (currentItemId.equals(item.getId())) {
-            Log.d(TAG, "Not switching to another item.  We are already displaying item " + item.getId());
-            return;
-        }
-        nextItemId = item.getId();
-        runOnUiThread(new Runnable() {
-            public void run() {
-                ViewParent parent = button.getParent();
-                parent.bringChildToFront(button);
-                button.setText("Next item #" + nextItemId);
-                button.setVisibility(View.VISIBLE);
-                button.setAlpha(200);
-                button.setBackgroundColor(Color.BLACK);
-                button.setOnClickListener(nextItemClickListener);
-            }
-        });
     }
 
     private void showItem() {
@@ -126,9 +162,6 @@ public class MuseumItemActivity extends Activity {
         if (html != null) {
             webview.loadData(html, "text/html", null);
         }
-        Button button = (Button) findViewById(R.id.nextbutton);
-        button.setVisibility(View.INVISIBLE);
-
     }
 
 }

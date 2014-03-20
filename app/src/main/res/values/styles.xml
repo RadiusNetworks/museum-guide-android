@@ -5,11 +5,21 @@
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
     <style name="AppBaseTheme" parent="android:Theme.Holo">
-        <!--
-            Theme customizations available in newer API levels can go in
-            res/values-vXX/styles.xml, while customizations related to
-            backward-compatibility can go here.
-        -->
+        <item name="android:actionBarStyle">@style/mActionBar</item>
+    </style>
+
+
+    <style name="mActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">#aecc79</item>
+        <item name="android:titleTextStyle">@style/MyActionBarTitleText</item>
+        <item name="android:displayOptions">showTitle</item>
+    </style>
+
+
+    <style name="MyActionBarTitleText">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20dp</item>
     </style>
 
     <!-- Application theme. -->

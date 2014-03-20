@@ -24,10 +24,20 @@ public class Museum {
     public static Museum loadFromPreferences(Context c) {
         ArrayList<MuseumItem> list = new ArrayList<MuseumItem>();
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(c);
-        String museumIds = settings.getString("mg_item_ids", null);
+        String museumIds = settings.getString("mg_museum_ids", null);
+        String museumTitles = settings.getString("mg_museum_titles", null);
         if (museumIds != null) {
-            for (String museumId : museumIds.split(",")) {
-                list.add(new MuseumItem(museumId));
+            String[] museumIdArray = museumIds.split(",");
+            String[] museumTitleArray = {};
+            if (museumTitles != null) {
+                museumTitleArray = museumTitles.split(",");
+            }
+            for (int i = 0; i < museumIdArray.length; i++) {
+                String title = null;
+                if (museumTitleArray.length > i) {
+                    title = museumTitleArray[i];
+                }
+                list.add(new MuseumItem(museumIdArray[i], title));
             }
         }
         Museum museum = new Museum(c, list);
@@ -37,6 +47,7 @@ public class Museum {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = settings.edit();
         editor.putString("mg_museum_ids", getIds());
+        editor.putString("mg_museum_titles", getTitles());
         editor.commit();
     }
     private String getIds() {
@@ -47,6 +58,15 @@ public class Museum {
         }
         return sb.toString();
     }
+    private String getTitles() {
+        StringBuilder sb = new StringBuilder();
+        for (MuseumItem item : museumItems) {
+            sb.append(item.getTitle().replace(",",""));
+            sb.append(",");
+        }
+        return sb.toString();
+    }
+
     public MuseumItem getItemById(String itemId) {
         for (MuseumItem item : museumItems) {
             if (item.getId().equals(itemId)) {
@@ -54,6 +74,16 @@ public class Museum {
             }
         }
         return null;
+    }
+    public int getItemIndexById(String itemId) {
+        int i = 0;
+        for (MuseumItem item : museumItems) {
+            if (item.getId().equals(itemId)) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
     }
 
     public List<MuseumItem> getItemList() {
