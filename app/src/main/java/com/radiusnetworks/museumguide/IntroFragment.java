@@ -1,5 +1,6 @@
 package com.radiusnetworks.museumguide;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -7,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 
 import com.radiusnetworks.museumguide.assets.RemoteAssetCache;
@@ -35,12 +38,30 @@ public class IntroFragment extends Fragment {
         Log.d(TAG, "I just tried to inflate "+R.layout.intro_screen+" and got "+rootView);
 
         Bundle args = getArguments();
+
+        View controlView = rootView.findViewById(R.id.introFinishControls);
+        if (item==3) {
+            controlView.setVisibility(View.VISIBLE);
+            Button button  = (Button) rootView.findViewById(R.id.continueButton);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkbox  = (CheckBox) rootView.findViewById(R.id.checkBox);
+                    ((IntroActivity)getActivity()).continueTapped(checkbox.isChecked());
+                }
+            });
+        }
+        else {
+            controlView.setVisibility(View.INVISIBLE);
+        }
+
         Log.d(TAG, "Setting up intro fragment with "+item);
         WebView webview = (WebView) rootView.findViewById(R.id.webView);
         //webview.loadData("intro page "+pageNumber, "text/html", null);
         // TODO: load an actual help page
         webview.loadUrl("file:///android_asset/intro" + item + ".html");
         Log.d(TAG, "Loaded intro page URL: "+webview.getUrl());
+
 
         return rootView;
     }

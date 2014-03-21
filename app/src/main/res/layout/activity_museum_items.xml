@@ -5,7 +5,19 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="#FFFFFF"
+    android:id="@+id/activity_museum_items"
     xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Automatic Mode: swipe left to go back"
+        android:background="#222222"
+        android:id="@+id/headerInstructions"
+        android:layout_alignParentTop="true"/>
 
     <LinearLayout
         android:id="@+id/nextButtonLayout"
@@ -49,6 +61,8 @@
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:background="#aecc79"
         android:layout_alignParentBottom="true">
 
 
@@ -56,7 +70,7 @@
         android:layout_width="0dp"
         android:layout_weight="0.5"
         android:layout_height="wrap_content"
-        android:id="@+id/button"
+        android:id="@+id/autoButton"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:background="#aecc79"
@@ -68,7 +82,7 @@
         android:layout_width="0dp"
         android:layout_weight="0.5"
     android:layout_height="wrap_content"
-    android:id="@+id/button"
+    android:id="@+id/sequentialButton"
     android:layout_margin="0dp"
     android:padding="0dp"
     android:background="#aecc79"
@@ -84,7 +98,67 @@ android:layout_alignParentBottom="true"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
 android:padding="0dp"
-android:id="@+id/imageButton"
-android:src="@drawable/search" />
+android:id="@+id/searchButton"
+android:src="@drawable/search_off" />
+
+    <!-- dialog -->
+    <RelativeLayout
+        android:id="@+id/search_dialog"
+        android:layout_width="300dp"
+        android:layout_height="200dp"
+        android:gravity="center"
+        android:background="@drawable/sh_dialog_background"
+        android:alpha="0.8"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:paddingBottom="50dp"
+        android:paddingTop="40dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Enter Item Number or Keyword"
+            android:id="@+id/enterSearchTerm"
+            android:gravity="center"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="20dp" />
+
+        <RelativeLayout
+            android:id="@+id/buttonWithInput"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_below="@+id/enterSearchTerm"
+            android:layout_centerInParent="true">
+
+
+            <EditText
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/search_text"
+                android:layout_centerInParent="true" />
+
+            <Button
+                android:id="@+id/search_go_button"
+                style="@style/sh_custom_button"
+                android:layout_width="100dp"
+                android:layout_marginLeft="5dp"
+                android:layout_height="wrap_content"
+                android:onClick="onCodeOkClicked"
+                android:text="OK"
+                android:textColor="#000000"
+                android:layout_toRightOf="@+id/search_text"
+                android:layout_centerInParent="true" />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
 
     </RelativeLayout>

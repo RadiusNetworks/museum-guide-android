@@ -7,18 +7,31 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by dyoung on 2/28/14.
  */
 public class Museum {
+    private static String TAG = "Museum";
     private List<MuseumItem> museumItems;
     private Context context;
 
     public Museum(Context context,List<MuseumItem> museumItems) {
         this.museumItems = museumItems;
         this.context = context;
+
+        Comparator<MuseumItem> comparator = new Comparator<MuseumItem>() {
+            public int compare(MuseumItem c1, MuseumItem c2) {
+                return c1.getId().compareTo(c2.getId());
+            }
+        };
+
+        Collections.sort(museumItems, comparator);
+
     }
 
     public static Museum loadFromPreferences(Context c) {
@@ -26,6 +39,7 @@ public class Museum {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(c);
         String museumIds = settings.getString("mg_museum_ids", null);
         String museumTitles = settings.getString("mg_museum_titles", null);
+        Log.d(TAG, "loaded titles as "+museumTitles);
         if (museumIds != null) {
             String[] museumIdArray = museumIds.split(",");
             String[] museumTitleArray = {};
@@ -48,6 +62,7 @@ public class Museum {
         SharedPreferences.Editor editor = settings.edit();
         editor.putString("mg_museum_ids", getIds());
         editor.putString("mg_museum_titles", getTitles());
+        Log.d(TAG, "Saving titles as"+getTitles());
         editor.commit();
     }
     private String getIds() {

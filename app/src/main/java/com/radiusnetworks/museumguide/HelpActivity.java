@@ -32,7 +32,7 @@ public class HelpActivity extends Activity {
 
         application = (MuseumGuideApplication) this.getApplication();
         WebView webView = (WebView) this.findViewById(R.id.webView);
-        webView.loadUrl("http://developer.radiusnetworks.com/scavenger_hunt/help.html");
+        webView.loadUrl("http://developer.radiusnetworks.com/museum_guide/help.html");
     }
 
 }

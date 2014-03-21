@@ -12,7 +12,7 @@ public class SimulatedScanData {
      *
      * Note that by default in this demo, this is disabled.  change the line below from false to true to enable it.
      */
-    public static boolean USE_SIMULATED_IBEACONS = true;
+    public static boolean USE_SIMULATED_IBEACONS = false;
 
     static {
         iBeacons = new ArrayList<IBeacon>();

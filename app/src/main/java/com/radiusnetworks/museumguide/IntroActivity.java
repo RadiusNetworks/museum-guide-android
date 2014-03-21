@@ -1,5 +1,7 @@
 package com.radiusnetworks.museumguide;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -7,6 +9,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
 /**
  * Created by dyoung on 3/20/14.
@@ -34,6 +38,29 @@ public class IntroActivity extends FragmentActivity {
                         getSupportFragmentManager());
         mViewPager.setAdapter(introCollectionPagerAdapter);
         Log.d(TAG, "intro activity started up");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mViewPager.setCurrentItem(0); // go back to first page
+        Context context = getApplicationContext();
+        CharSequence text = "Swipe right to continue";
+        int duration = Toast.LENGTH_SHORT;
+
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+    }
+
+    public void continueTapped(boolean dontShowAgain) {
+        Log.d(TAG, "DONT SHOW AGAIN IS "+dontShowAgain);
+        if (dontShowAgain) {
+            application.setDontShowIntroAgain();
+        }
+        application.setDisplayedIntro(true);
+        Intent intent = new Intent(this, LoadingActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 

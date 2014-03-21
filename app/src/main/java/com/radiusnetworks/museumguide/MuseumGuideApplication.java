@@ -76,6 +76,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
     private boolean codeNeeded;
     private VisibleMuseumItems visibleMuseumItems = new VisibleMuseumItems();
     private Museum museum = null;
+    private Boolean displayedIntro = false;
     int startCount = 0;
 
     @Override
@@ -85,20 +86,20 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         backgroundPowerSaver = new BackgroundPowerSaver(this);
         manager = ProximityKitManager.getInstanceForApplication(this);
         manager.setNotifier(this);
-        manager.getIBeaconManager().LOG_DEBUG = true;
+        manager.getIBeaconManager().LOG_DEBUG = false;
 
         if (!new PropertiesFile().exists()) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
             String code = settings.getString("code", null);
-            if (code != null && !code.equals("")) {
-                Log.d(TAG, "Code is not needed because it is "+code);
-                startPk(code);
-            }
-            else {
+            //if (code != null && !code.equals("")) {
+            //    Log.d(TAG, "Code is not needed because it is "+code);
+            //    startPk(code);
+           // }
+           // else {
                 Log.d(TAG, "Code is needed");
                 this.codeNeeded = true;
                 return;
-            }
+           // }
         }
         else {
             Log.d(TAG, "Code is not needed because we have a properties file");
@@ -122,9 +123,12 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             Log.d(TAG, "clearing shared preferences");
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
             String code = settings.getString("code", null);
+            Boolean dontShowAgain = settings.getBoolean("dont_show_intro_again", false);
             SharedPreferences.Editor editor = settings.edit();
+            setDisplayedIntro(false);
             editor.clear();
             editor.putString("code", code);
+            editor.putBoolean("dont_show_intro_again", dontShowAgain);
             editor.commit();
             museum = null;
             remoteAssetCache = new RemoteAssetCache(this);
@@ -355,9 +359,23 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
 
     public boolean isCodeNeeded() { return this.codeNeeded; }
 
+    public boolean hasDisplayedIntro() { return this.displayedIntro; }
+
+    public void setDisplayedIntro(boolean value) { this.displayedIntro = value; }
 
     public RemoteAssetCache getRemoteAssetCache() {
         return remoteAssetCache;
+    }
+
+    public void setDontShowIntroAgain() {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("dont_show_intro_again", true);
+        editor.commit();
+    }
+    public boolean getDontShowIntroAgain() {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        return settings.getBoolean("dont_show_intro_again", false);
     }
 
     // Checks to see that one found and one not found image has been downloaded for each target
@@ -383,7 +401,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
                 new NotificationCompat.Builder(this)
                         .setContentTitle("Museum Guide")
                         .setContentText("An exhibit item is nearby.")
-                        .setSmallIcon(R.drawable.ic_launcher);
+                        .setSmallIcon(R.drawable.launcher);
 
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);

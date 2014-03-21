@@ -56,14 +56,15 @@ public class LoadingActivity extends Activity {
         application = (MuseumGuideApplication) this.getApplication();
         application.setLoadingActivity(this);
         if (application.getMuseum() != null) {
-            Log.d(TAG, "hunt is ongoing");
+            Log.d(TAG, "museum is ongoing");
             // user exited after starting a musuem.  resume where he or she left off
-            Intent i = new Intent(this, MuseumItemActivity.class);
+            Intent i = new Intent(this, MuseumItemsActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(i);
             finish();
             return;
         }
+
         setupCodeView();
         checkPrerequisites();
     }
@@ -101,6 +102,15 @@ public class LoadingActivity extends Activity {
             startButton.setOnClickListener( new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    if (!application.hasDisplayedIntro() && !application.getDontShowIntroAgain()) {
+                        // need to display intro
+                        Intent i = new Intent(LoadingActivity.this, IntroActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(i);
+                        finish();
+                        return;
+                    }
+
                     if (application.isCodeNeeded()) {
                         setContentView(R.layout.sh_activity_code);
                         LoadingActivity.this.findViewById(R.id.code_dialog).setVisibility(View.VISIBLE);
@@ -138,7 +148,7 @@ public class LoadingActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("http://developer.radiusnetworks.com/scavenger_hunt"));
+                        Uri.parse("http://developer.radiusnetworks.com/museum_guide"));
                 startActivity(browserIntent);
             }
         });
