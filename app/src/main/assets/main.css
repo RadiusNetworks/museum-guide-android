@@ -1,0 +1,69 @@
+/*! HTML5 Boilerplate v4.3.0 | MIT License | http://h5bp.com/ */
+
+/*
+ * What follows is the result of much research on cross-browser styling.
+ * Credit left inline and big thanks to Nicolas Gallagher, Jonathan Neal,
+ * Kroc Camen, and the H5BP dev community and team.
+ */
+
+/* ==========================================================================
+   Base styles: opinionated defaults
+   ========================================================================== */
+
+html,
+button,
+input,
+select,
+textarea {
+    color: #222;
+}
+
+html {
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+body {
+  width: 100%;
+  color: #333333;
+  padding: 0;
+  margin: 0;
+}
+
+p {
+font-family: "Helvetica Neue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+font-weight: 300;
+}
+
+.content {
+
+    display: block;
+
+    margin: 0 auto;
+
+
+    width: 300px;
+
+    overflow: hidden;
+
+}
+
+.auto {
+    margin: 30px auto;
+    padding: 5px;
+    width: 100%;
+}
+
+.text {     
+
+    display: block;
+
+    margin: 0 auto;
+
+    width: 320px;
+
+    text-align: center;
+
+    color: #999999;
+  }
+
