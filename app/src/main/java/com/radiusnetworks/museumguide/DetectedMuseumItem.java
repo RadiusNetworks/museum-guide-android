@@ -16,6 +16,10 @@ package com.radiusnetworks.museumguide;
 import java.util.Date;
 
 /**
+ * This object is a MuseumItem whose corresponding iBeacon has been detected by the app.  The time
+ * of the last detection and the distance the item was when it was detected are stored.  This is used
+ * by the VisibleMuseumItems class to determine which other museum items are nearby.
+ *
  * Created by dyoung on 2/28/14.
  */
 public class DetectedMuseumItem extends MuseumItem {

@@ -28,13 +28,16 @@ import android.widget.ImageView;
 import com.radiusnetworks.museumguide.assets.RemoteAssetCache;
 
 /**
+ * This class represents a single page in the Intro as controlled by the IntroActivity
+ *
  * Created by dyoung on 3/10/14.
  */
 public class IntroFragment extends Fragment {
-    public static final String TAG = "IntroFragment";
-    public static final String ARG_OBJECT = "object";
-    View rootView;
-    int item;
+    private static final String TAG = "IntroFragment";
+    private static final String ARG_OBJECT = "object";
+    private boolean dontShowAgain = false;
+    private View rootView;
+    private int item;
 
     public IntroFragment(int page) {
         item = page+1;
@@ -43,24 +46,30 @@ public class IntroFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "intro fragment onCreateView");
-        // The last two arguments ensure LayoutParams are inflated
-        // properly.
         rootView = inflater.inflate(
                 R.layout.intro_screen, container, false);
-        Log.d(TAG, "I just tried to inflate "+R.layout.intro_screen+" and got "+rootView);
-
-        Bundle args = getArguments();
 
         View controlView = rootView.findViewById(R.id.introFinishControls);
-        if (item==3) {
+
+        /*
+         If we are on the last page of the intro, we show a special controlView that lets the user
+         select if they ever want to see this again, and continue on to the main part of the app.
+         */
+        if (item==IntroActivity.NUM_INTRO_PAGES) {
             controlView.setVisibility(View.VISIBLE);
+            rootView.findViewById(R.id.checkBox).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    dontShowAgainTapped();
+                }
+            });
+
+            // This button lets the user move on to the main part of the app
             Button button  = (Button) rootView.findViewById(R.id.continueButton);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    CheckBox checkbox  = (CheckBox) rootView.findViewById(R.id.checkBox);
-                    ((IntroActivity)getActivity()).continueTapped(checkbox.isChecked());
+                    ((IntroActivity)getActivity()).continueTapped(dontShowAgain);
                 }
             });
         }
@@ -68,15 +77,24 @@ public class IntroFragment extends Fragment {
             controlView.setVisibility(View.INVISIBLE);
         }
 
-        Log.d(TAG, "Setting up intro fragment with "+item);
         WebView webview = (WebView) rootView.findViewById(R.id.webView);
-        //webview.loadData("intro page "+pageNumber, "text/html", null);
-        // TODO: load an actual help page
         webview.loadUrl("file:///android_asset/intro" + item + ".html");
         Log.d(TAG, "Loaded intro page URL: "+webview.getUrl());
-
 
         return rootView;
     }
 
+    // Track the state of the checkbox here manually, because we are using a custom ImageButton so
+    // we can make the checkbox have a special look
+    public void dontShowAgainTapped() {
+        dontShowAgain = !dontShowAgain;
+        Log.d(TAG, "DONT SHOW AGAIN tapped.  it is now: " + dontShowAgain);
+        if (dontShowAgain) {
+            rootView.findViewById(R.id.checkBox).setBackground(getResources().getDrawable(R.drawable.checkbox_checked ));
+        }
+        else {
+            rootView.findViewById(R.id.checkBox).setBackground(getResources().getDrawable(R.drawable.checkbox_unchecked ));
+        }
+
+    }
 }

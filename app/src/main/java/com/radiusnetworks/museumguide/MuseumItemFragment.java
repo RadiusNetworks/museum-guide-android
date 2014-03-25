@@ -26,19 +26,19 @@ import com.radiusnetworks.museumguide.assets.RemoteAssetCache;
 
 /**
  * Created by dyoung on 3/10/14.
+ *
+ * This class displays a single museum item inside a FragmentStatePagerAdapter
  */
-public class ScreenFragment extends Fragment {
-    public static final String TAG = "ScreenFragment";
-    public static final String ARG_OBJECT = "object";
-    View rootView;
-    String itemId = null;
+public class MuseumItemFragment extends Fragment {
+    private static final String TAG = "MuseumItemFragment";
+    private static final String ARG_OBJECT = "object";
+    private View rootView;
+    private String itemId = null;
 
     @Override
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "fragment onCreateView");
-        // The last two arguments ensure LayoutParams are inflated
-        // properly.
         rootView = inflater.inflate(
                 R.layout.museum_item, container, false);
         Bundle args = getArguments();
@@ -64,6 +64,4 @@ public class ScreenFragment extends Fragment {
             rootView.findViewById(R.id.nextButton).setVisibility(View.INVISIBLE);
         }
     }
-
-
 }

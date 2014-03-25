@@ -16,6 +16,9 @@ package com.radiusnetworks.museumguide;
 import java.util.Date;
 
 /**
+ * Represents a single item in the museum.  The values are set in ProximityKit and the objects are
+ * instantiated with PK syncs.
+ *
  * Created by dyoung on 2/28/14.
  */
 public class MuseumItem {

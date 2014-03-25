@@ -22,20 +22,22 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
 
 /**
+ * This Activity shows a walkthrough of how the app works using a swipe paging control
+ * The pages are displayed as webviews within a FragmentStatePagerAdapter.  Each page view is
+ * represented by the IntroFragment class.
+ *
  * Created by dyoung on 3/20/14.
  */
 public class IntroActivity extends FragmentActivity {
-    // When requested, this adapter returns a DemoObjectFragment,
-    // representing an object in the collection.
-    IntroCollectionPagerAdapter introCollectionPagerAdapter;
-
-    ViewPager mViewPager;
-
     private static final String TAG = "IntroActivity";
+    public static final int NUM_INTRO_PAGES = 3;
+    private IntroCollectionPagerAdapter introCollectionPagerAdapter;
+    private ViewPager viewPager;
     private MuseumGuideApplication application;
 
 
@@ -45,24 +47,32 @@ public class IntroActivity extends FragmentActivity {
         setContentView(R.layout.activity_intro);
         application = (MuseumGuideApplication) this.getApplication();
 
-        mViewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager = (ViewPager) findViewById(R.id.pager);
         introCollectionPagerAdapter =
                 new IntroCollectionPagerAdapter(
                         getSupportFragmentManager());
-        mViewPager.setAdapter(introCollectionPagerAdapter);
+        viewPager.setAdapter(introCollectionPagerAdapter);
         Log.d(TAG, "intro activity started up");
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
-        mViewPager.setCurrentItem(0); // go back to first page
+        // go back to first page whenever we restart
+        viewPager.setCurrentItem(0);
         Context context = getApplicationContext();
+
+        // Give the user a hint that they swipe to navigate
         CharSequence text = "Swipe right to continue";
         int duration = Toast.LENGTH_SHORT;
-
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return new OptionsMenuCreator(this, application).onCreateOptionsMenu(menu);
     }
 
     public void continueTapped(boolean dontShowAgain) {
@@ -75,7 +85,6 @@ public class IntroActivity extends FragmentActivity {
         startActivity(intent);
         finish();
     }
-
 
     class IntroCollectionPagerAdapter extends FragmentStatePagerAdapter {
         public IntroCollectionPagerAdapter(FragmentManager fm) {
@@ -92,13 +101,12 @@ public class IntroActivity extends FragmentActivity {
 
         @Override
         public int getItemPosition(Object object) {
-            return POSITION_NONE;
+            return POSITION_UNCHANGED;
         }
 
         @Override
         public int getCount() {
-            Log.d(TAG, "Got count (3) from  pager adapter that will create fragments");
-            return 3;
+            return NUM_INTRO_PAGES;
         }
 
         @Override

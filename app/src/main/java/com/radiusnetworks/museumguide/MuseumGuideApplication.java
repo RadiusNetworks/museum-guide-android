@@ -43,24 +43,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by dyoung on 1/24/14.
+ * Created by dyoung on 2/28/14.
  *
  * This is the central application class for the Museum Guide.  It is responsible for:
  * 1. Initializing ProxomityKit, which downloads all the iBeacons associated with the museum
- *    along with their configured item_id values and image_url values.  It then starts
+ *    along with their configured item_id, image_url, html_url, and title values.  It then starts
  *    ranging and monitoring for these iBeacons, and will continue to do so even across
  *    a reboot.
- * 2. Downloads all the scavenger hunt badges ("target images") needed for both the found and
- *    not found states of each target.
+ * 2. Downloads all the museum item images and html pages needed.
  * 3. Updates the LoadingActivity with the status of the above download state.
- * 4. Once loading completes, launches the TargetCollectionActivity which is the main screen for the
- *    hunt.
+ * 4. Once loading completes, launches the MuseumItemsActivity which is the main screen for the
+ *    museum, which shows a swipe view of all the museum items.
  * 5. Handles all ranging and monitoring callbacks for iBeacons.  When an iBeacon is ranged,
- *    this class checks to see if it matches a scavenger hunt target and awards a badge if it is
- *    close enough.  If an iBeacon comes into view, it sends a notification that a target is nearby.
+ *    this class checks to see if it matches a museum item and displays a notification on the
+ *    MuseumItemsActivity that the next museum item is nearby.
  */
-
-
 
 public class MuseumGuideApplication extends Application implements ProximityKitNotifier {
 
@@ -91,21 +88,14 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         if (!new PropertiesFile().exists()) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
             String code = settings.getString("code", null);
-            //if (code != null && !code.equals("")) {
-            //    Log.d(TAG, "Code is not needed because it is "+code);
-            //    startPk(code);
-           // }
-           // else {
-                Log.d(TAG, "Code is needed");
-                this.codeNeeded = true;
-                return;
-           // }
+            Log.d(TAG, "Code is needed");
+            this.codeNeeded = true;
+            return;
         }
         else {
             Log.d(TAG, "Code is not needed because we have a properties file");
             startPk(null);
         }
-
     }
 
     public void startPk(String code) {
@@ -118,6 +108,10 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         }
     }
 
+    /**
+     * switches to a different museum
+     * @param activity
+     */
     public void startOver(Activity activity) {
         if (!new PropertiesFile().exists()) {
             Log.d(TAG, "clearing shared preferences");
@@ -152,11 +146,10 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         }
     }
 
-
     // if loading dependencies fails, we want to display a message to the user
     // we can only do so if the loading activity has already been created
     // otherwise, we store the messages for display a second or so later
-    // when that acdtivity finally launches
+    // when that activity finally launches
     private void dependencyLoadingFailed(String title, String message) {
         Log.d(TAG, "dependencyLoadingFailed");
         this.loadingFailedTitle = title;
@@ -238,8 +231,11 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
 
         for (KitIBeacon iBeacon : manager.getKit().getIBeacons()) {
             String itemId = iBeacon.getAttributes().get("item_id");
-            String title = iBeacon.getAttributes().get("title");
             if (itemId != null) {
+                String title = iBeacon.getAttributes().get("title");
+                if (title == null) {
+                    Log.e(TAG, "ERROR: No title specified in ProximityKit for item with item_id=" + itemId);
+                }
                 MuseumItem item = new MuseumItem(itemId, title);
                 museumItems.add(item);
                 String imageUrl = iBeacon.getAttributes().get("image_url");
@@ -286,11 +282,9 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             this.museum.saveToPreferences(this);
         }
 
-        // After we have all our data from ProximityKit, we need to download the images and cache them
-        // for display in the app.  We do this every time, so that the app can update the images after
-        // later, and have users get the update if they restart the app.  This takes time, so if you
-        // don't want to do this, then only execute this code if validateRequiredImagesPresent()
-        // returns false.
+        // After we have all our data from ProximityKit, we need to download the images and html files
+        // and cache them for display in the app.  We do this every time, so that the app can update the i
+        // files, and have users get the update if they restart the app.
         remoteAssetCache = new RemoteAssetCache(this);
         remoteAssetCache.downloadAssets(urlMap, new AssetFetcherCallback() {
             @Override
@@ -328,7 +322,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             return;
         }
 
-        if (validateRequiredImagesPresent()) {
+        if (validateRequiredAssetsPresent()) {
             // Yes, we have everything we need to start up.  Let's start the image activity with the first exhibit item
             Intent i = new Intent(loadingActivity, MuseumItemsActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -379,8 +373,8 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
     }
 
     // Checks to see that one found and one not found image has been downloaded for each target
-    private boolean validateRequiredImagesPresent() {
-        Log.d(TAG, "Validating required images are present");
+    private boolean validateRequiredAssetsPresent() {
+        Log.d(TAG, "Validating required assets are present");
         boolean missing = false;
         for (MuseumItem museumItem : museum.getItemList()) {
             if (remoteAssetCache.getImageByName("item" + museumItem.getId()) == null) {

@@ -16,7 +16,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:background="#000000"
+        android:background="#aecc79"
         android:id="@+id/introFinishControls"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
@@ -28,15 +28,15 @@
             android:text="Don't show again"
             android:gravity="right"
             android:textColor="#ffffff"/>
-        <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="29dp"
             android:text=""
             android:layout_marginRight="10dp"
             android:layout_marginLeft="10dp"
             android:id="@+id/checkBox"
-            android:checked="false"
             android:textColor="#ffffff"
+            android:background="@drawable/checkbox_unchecked"
             android:layout_alignParentBottom="true" />
 
         <Button

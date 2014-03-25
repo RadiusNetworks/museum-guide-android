@@ -15,7 +15,6 @@ package com.radiusnetworks.museumguide;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -36,24 +35,26 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.Date;
 import java.util.Stack;
 
 
 /**
+ * This class is the main activity for the application.  It controls a swipeable list of
+ * MuseumItemFragments that can be in one of two modes.  Sequential mode is a static list of all
+ * items in the museum that can be browsed.  Automatic mode is a list of all the items the user has
+ * visited before, and new items are put on the stack when the user taps a notification bar at the
+ * top of the screen when an item is nearby, which causes a new item to be displayed and put on the
+ * stack of what the user has visited.
+ *
  * Created by dyoung on 3/6/14.
  */
 public class MuseumItemsActivity extends FragmentActivity {
-    // When requested, this adapter returns a DemoObjectFragment,
-    // representing an object in the collection.
-    VisitedItemCollectionPagerAdapter visitedItemCollectionPagerAdapter;
-    SequentialItemCollectionPagerAdapter sequentialItemCollectionPagerAdapter;
-
-    ViewPager mViewPager;
-
     private static final String TAG = "MuseumItemsActivity";
+    private ViewPager viewPager;
+    private VisitedItemCollectionPagerAdapter visitedItemCollectionPagerAdapter;
+    private SequentialItemCollectionPagerAdapter sequentialItemCollectionPagerAdapter;
     private MuseumGuideApplication application;
     private Stack<String> itemStack = new Stack<String>();
     private String currentItemId = null;
@@ -73,45 +74,57 @@ public class MuseumItemsActivity extends FragmentActivity {
         if (this.getIntent().getExtras() != null) {
             currentItemId = this.getIntent().getExtras().getString("item_id");
         } else {
-            // TODO: load stack from preferences (should have saved off where you were)
+            // By default, show the very first item in the museum, unless told to do otherwise
             currentItemId = application.getMuseum().getItemList().get(0).getId();
         }
-        mViewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager = (ViewPager) findViewById(R.id.pager);
         museumControls = new MuseumControls(findViewById(R.id.activity_museum_items));
         findViewById(R.id.search_dialog).setVisibility(View.INVISIBLE);
 
         setAutomaticMode();
-        //setSequentialMode();
         hideNextItemNotification();
         Log.d(TAG, "Museum at startup:");
         for (MuseumItem item : application.getMuseum().getItemList() ) {
             Log.d(TAG, "Item id "+item.getId()+" has title: "+item.getTitle());
         }
     }
-    
+
+    /**
+     * Sets this Activity to sequential mode.  This mode is a simple sequential list of all items
+     * in the museum that the user swipes through.  iBeacons are not used.
+     */
     private void setSequentialMode() {
         sequentialItemCollectionPagerAdapter =
                 new SequentialItemCollectionPagerAdapter(
                         getSupportFragmentManager());
-        mViewPager.setAdapter(sequentialItemCollectionPagerAdapter);
-        mViewPager.setOnPageChangeListener(sequentialItemPageChangeListener);
+        viewPager.setAdapter(sequentialItemCollectionPagerAdapter);
+        viewPager.setOnPageChangeListener(sequentialItemPageChangeListener);
         museumControls.setAutoMode(false);
         nextItemId = null;
         hideNextItemNotification();
 
     }
+
+    /**
+     * Sets this Activity to automatic mode.  This mode shows a swipeable history of where the user
+     * has been, but new items are only shown by tapping on a notification when one becomoes nearby.
+     */
     private void setAutomaticMode() {
         visitedItemCollectionPagerAdapter =
                 new VisitedItemCollectionPagerAdapter(
                         getSupportFragmentManager());
-        mViewPager.setAdapter(visitedItemCollectionPagerAdapter);
-        mViewPager.setOnPageChangeListener(visitedItemPageChangeListener);
+        viewPager.setAdapter(visitedItemCollectionPagerAdapter);
+        viewPager.setOnPageChangeListener(visitedItemPageChangeListener);
         museumControls.setAutoMode(true);
         nextItemId = null;
         itemStack.empty();
         hideNextItemNotification();
     }
-    
+
+    //------------------------------------------------------------------
+    // The following section of code is only for Sequential Mode
+    //------------------------------------------------------------------
+
     private String getItemForSequentialPage(int i) {
         MuseumItem item = application.getMuseum().getItemList().get(i);
         return item.getId();
@@ -120,31 +133,14 @@ public class MuseumItemsActivity extends FragmentActivity {
     private int getSequentialItemPageCount() {
         return application.getMuseum().getItemList().size();
     }
-    
-    
-    private String getItemForVisitedPage(int i) {
-        String itemId = null;
-        if (i < itemStack.size()) {
-            return itemStack.get(i);
-        }
-        if (i == itemStack.size()) {
-            return currentItemId;
-        }
-        return null;
-    }
 
-    private int getVisitedItemPageCount() {
-        int pageCount = itemStack.size() + 1;
-        Log.d(TAG, "page count is " + pageCount);
-        return pageCount;
-    }
-
-    // returns true if the user is currently on the "next" page
-    // TODO delete this
-    private boolean isNewPage(int currentPage) {
-        return (nextItemId != null && currentPage == getVisitedItemPageCount() - 1);
-    }
-
+    /**
+     * Executed when the user taps the search button on the search dialog.  It looks for an exact
+     * match to the item id first, and if it doesn't find one, it tries to do a partial string match
+     * to the item title.  If any match is found, the pager scrolls to that screen.
+     *
+     * @param text
+     */
     private void search(String text) {
         // first, look for an exact match on id
         MuseumItem match = null;
@@ -170,12 +166,11 @@ public class MuseumItemsActivity extends FragmentActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mViewPager.setCurrentItem(application.getMuseum().getItemIndexById(matchToShow.getId()));
+                    viewPager.setCurrentItem(application.getMuseum().getItemIndexById(matchToShow.getId()));
                 }
             });
         }
     }
-
 
     ViewPager.OnPageChangeListener sequentialItemPageChangeListener = new ViewPager.OnPageChangeListener() {
 
@@ -194,20 +189,64 @@ public class MuseumItemsActivity extends FragmentActivity {
             Log.d(TAG, "We just swiped to a new page");
             Log.d(TAG, "count is " + getVisitedItemPageCount());
             Log.d(TAG, "pos is " + pos);
-            /*
-            if (pos+1 < MuseumItemsActivity.this.application.getMuseum().getItemList().size()) {
-                Log.d(TAG, "showing next item");
-                MuseumItem item = MuseumItemsActivity.this.application.getMuseum().getItemList().get(pos+1);
-                showNextItemNotification(item.getId(), item.getTitle());
-            }
-            else {
-                Log.d(TAG, "not showing next item -- there is not one.  current pos="+pos+", total items="+MuseumItemsActivity.this.application.getMuseum().getItemList().size());
-                hideNextItemNotification();
-            }
-            */
         }
 
     };
+
+    class SequentialItemCollectionPagerAdapter extends FragmentStatePagerAdapter {
+        public SequentialItemCollectionPagerAdapter(FragmentManager fm) {
+            super(fm);
+            Log.d(TAG, "Constructed pager adapter that will create fragments");
+        }
+
+        @Override
+        public Fragment getItem(int i) {
+            MuseumItemFragment fragment = new MuseumItemFragment();
+            String itemId = application.getMuseum().getItemList().get(i).getId();
+            Log.d(TAG, "setting up fragment with " + itemId);
+            fragment.showItem(itemId);
+
+            return fragment;
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_UNCHANGED;
+        }
+
+        @Override
+        public int getCount() {
+            Log.d(TAG, "Got count from  pager adapter that will create fragments");
+            return application.getMuseum().getItemList().size();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return "POSITION " + (position + 1);
+        }
+    }
+
+
+    //------------------------------------------------------------------
+    // The following section of code is only for Automatic Mode
+    //------------------------------------------------------------------
+
+    private String getItemForVisitedPage(int i) {
+        String itemId = null;
+        if (i < itemStack.size()) {
+            return itemStack.get(i);
+        }
+        if (i == itemStack.size()) {
+            return currentItemId;
+        }
+        return null;
+    }
+
+    private int getVisitedItemPageCount() {
+        int pageCount = itemStack.size() + 1;
+        Log.d(TAG, "page count is " + pageCount);
+        return pageCount;
+    }
 
     ViewPager.OnPageChangeListener visitedItemPageChangeListener = new ViewPager.OnPageChangeListener() {
 
@@ -229,20 +268,11 @@ public class MuseumItemsActivity extends FragmentActivity {
             Log.d(TAG, "pos is " + pos);
             Log.d(TAG, "nextItemId=" + nextItemId);
             Log.d(TAG, "stack size is " + itemStack.size());
-            if (isNewPage(pos)) {
-                Log.d(TAG, "THIS SHOULD NEVER HAPPEN: This is the new item page that just went into view.  We need to make it current.");
-                /*
-                itemStack.push(currentItemId);
-                currentItemId = nextItemId;
+            if (itemStack.size() > 0) {
+                Log.d(TAG, "We seem to have gone backward");
                 nextItemId = null;
-                */
-            } else {
-                if (itemStack.size() > 0) {
-                    Log.d(TAG, "We seem to have gone backward");
-                    nextItemId = null;
-                    currentItemId = itemStack.pop();
-                    visitedItemCollectionPagerAdapter.notifyDataSetChanged(); // we just deleted the last page
-                }
+                currentItemId = itemStack.pop();
+                visitedItemCollectionPagerAdapter.notifyDataSetChanged(); // we just deleted the last page
             }
         }
 
@@ -267,16 +297,16 @@ public class MuseumItemsActivity extends FragmentActivity {
             public void onClick(View view) {
                 Log.d(TAG, "next item button tapped");
                 if (museumControls.getAutoMode()) {
-                    int currentPage = mViewPager.getCurrentItem();
+                    int currentPage = viewPager.getCurrentItem();
                     itemStack.push(currentItemId);
                     currentItemId = itemId;
-                    mViewPager.getAdapter().notifyDataSetChanged();
-                    mViewPager.setCurrentItem(currentPage+1);
+                    viewPager.getAdapter().notifyDataSetChanged();
+                    viewPager.setCurrentItem(currentPage+1);
                 }
                 else {
                     // scroll to next item
                     int index = MuseumItemsActivity.this.application.getMuseum().getItemIndexById(itemId);
-                    mViewPager.setCurrentItem(index);
+                    viewPager.setCurrentItem(index);
                 }
                 runOnUiThread(new Runnable() {
                     public void run() {
@@ -289,11 +319,6 @@ public class MuseumItemsActivity extends FragmentActivity {
         ((Button) findViewById(R.id.nextButton)).setOnClickListener(onClickListener);
         ((Button) findViewById(R.id.nextButtonTitle)).setOnClickListener(onClickListener);
 
-    }
-
-    private void hideNextItemNotification() {
-        View button = findViewById(R.id.nextButtonLayout);
-        button.setVisibility(View.INVISIBLE);
     }
 
     /*
@@ -348,30 +373,6 @@ public class MuseumItemsActivity extends FragmentActivity {
 
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem settings = menu.add("Exit museum");
-        settings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-        settings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            public boolean onMenuItemClick(MenuItem item) {
-                application.startOver(MuseumItemsActivity.this);
-                return true;
-            }
-        });
-        MenuItem help = menu.add("Help");
-        help.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-        help.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://developer.radiusnetworks.com/museum_guide/help.html"));
-                startActivity(browserIntent);
-                return true;
-            }
-        });
-        return true;
-    }
-
-
-    //mPagerAdapter.notifyDataSetChanged()
     class VisitedItemCollectionPagerAdapter extends FragmentStatePagerAdapter {
         public VisitedItemCollectionPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -380,7 +381,7 @@ public class MuseumItemsActivity extends FragmentActivity {
 
         @Override
         public Fragment getItem(int i) {
-            ScreenFragment fragment = new ScreenFragment();
+            MuseumItemFragment fragment = new MuseumItemFragment();
             String itemId = getItemForVisitedPage(i);
             Log.d(TAG, "setting up fragment with " + itemId);
             fragment.showItem(itemId);
@@ -405,38 +406,11 @@ public class MuseumItemsActivity extends FragmentActivity {
         }
     }
 
-    //mPagerAdapter.notifyDataSetChanged()
-    class SequentialItemCollectionPagerAdapter extends FragmentStatePagerAdapter {
-        public SequentialItemCollectionPagerAdapter(FragmentManager fm) {
-            super(fm);
-            Log.d(TAG, "Constructed pager adapter that will create fragments");
-        }
+    //--------------------------------------------------------------
 
-        @Override
-        public Fragment getItem(int i) {
-            ScreenFragment fragment = new ScreenFragment();
-            String itemId = application.getMuseum().getItemList().get(i).getId();
-            Log.d(TAG, "setting up fragment with " + itemId);
-            fragment.showItem(itemId);
-
-            return fragment;
-        }
-
-        @Override
-        public int getItemPosition(Object object) {
-            return POSITION_NONE;
-        }
-
-        @Override
-        public int getCount() {
-            Log.d(TAG, "Got count from  pager adapter that will create fragments");
-            return application.getMuseum().getItemList().size();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return "POSITION " + (position + 1);
-        }
+    private void hideNextItemNotification() {
+        View button = findViewById(R.id.nextButtonLayout);
+        button.setVisibility(View.INVISIBLE);
     }
 
 
@@ -560,6 +534,11 @@ public class MuseumItemsActivity extends FragmentActivity {
             }
         };
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return new OptionsMenuCreator(this, application).onCreateOptionsMenu(menu);
     }
 
 }
