@@ -60,6 +60,7 @@ public class MuseumItemsActivity extends FragmentActivity {
     private String currentItemId = null;
     private String nextItemId = null;
     private MuseumControls museumControls;
+    private boolean mSuppressPageChangeEvents = false;
 
 
     @Override
@@ -244,7 +245,7 @@ public class MuseumItemsActivity extends FragmentActivity {
 
     private int getVisitedItemPageCount() {
         int pageCount = itemStack.size() + 1;
-        Log.d(TAG, "page count is " + pageCount);
+        Log.d(TAG, "previously visited page count is " + pageCount);
         return pageCount;
     }
 
@@ -263,11 +264,19 @@ public class MuseumItemsActivity extends FragmentActivity {
 
         @Override
         public void onPageSelected(int pos) {
+            // This is needed because on Android L, this event fires when we manually change the
+            // page when a user taps on the button to go to the next item.  Without the suppression,
+            // it was deciding that the user had swiped backwards, effectively leaving the user stuck
+            // on a single page in Automatic mode.
+            if (mSuppressPageChangeEvents) {
+                Log.d(TAG, "*** onPageSelected event suppressed ***");
+                return;
+            }
             Log.d(TAG, "We just swiped to a new page");
             Log.d(TAG, "count is " + getVisitedItemPageCount());
             Log.d(TAG, "pos is " + pos);
             Log.d(TAG, "nextItemId=" + nextItemId);
-            Log.d(TAG, "stack size is " + itemStack.size());
+            Log.d(TAG, "previously visited page count is " + itemStack.size());
             if (itemStack.size() > 0) {
                 Log.d(TAG, "We seem to have gone backward");
                 nextItemId = null;
@@ -298,10 +307,13 @@ public class MuseumItemsActivity extends FragmentActivity {
                 Log.d(TAG, "next item button tapped");
                 if (museumControls.getAutoMode()) {
                     int currentPage = viewPager.getCurrentItem();
+                    mSuppressPageChangeEvents = true;
                     itemStack.push(currentItemId);
                     currentItemId = itemId;
                     viewPager.getAdapter().notifyDataSetChanged();
                     viewPager.setCurrentItem(currentPage+1);
+                    mSuppressPageChangeEvents = false;
+                    Log.d(TAG, "We should have scrolled to the next item.  Everything should be done.");
                 }
                 else {
                     // scroll to next item
