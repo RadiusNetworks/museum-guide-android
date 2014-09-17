@@ -93,6 +93,13 @@ public class RemoteAssetCache {
                     RemoteAssetCache.this.lastException = e;
                     RemoteAssetCache.this.lastResponseCode = responseCode;
 
+                    if (assetUrl == null) {
+                        Log.w(TAG, "Failed to load "+ assetUrl);
+                        // not sure how we get in here
+                        RemoteAssetCache.this.callback.requestFailed(lastResponseCode, lastException);
+                        return;
+                    }
+
                     // If this was a specfic dpi url, fallback to the mdpi url
                     Matcher matcher = DENSITY_PATTERN.matcher(assetUrl);
                     // only try to get the mdpi version if this wasn't the mdpi version
@@ -191,7 +198,7 @@ public class RemoteAssetCache {
             return sb.toString();
 
         } catch (FileNotFoundException e) {
-            Log.d(TAG, "Can't load html named "+name, e);
+            Log.d(TAG, "Can't load html named "+name);
         }
         return null;
     }

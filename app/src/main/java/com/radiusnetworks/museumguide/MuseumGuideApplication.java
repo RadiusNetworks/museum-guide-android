@@ -40,6 +40,7 @@ import com.radiusnetworks.museumguide.assets.RemoteAssetCache;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -322,7 +323,8 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             return;
         }
 
-        if (validateRequiredAssetsPresent()) {
+        List<String> missingAssets = getMissingAssetList();
+        if (missingAssets.size() == 0) {
             // Yes, we have everything we need to start up.  Let's start the image activity with the first exhibit item
             Intent i = new Intent(loadingActivity, MuseumItemsActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -331,7 +333,9 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
             this.loadingActivity.finish(); // do this so that if we hit back, the loading activity won't show up again
             return;
         } else {
-            dependencyLoadingFailed("Network error", "Can't download images.  Please verify your network connection and try again.");
+            dependencyLoadingFailed("Error loading museum", "Can't download images and/or html."+
+                    "  Please verify your network connection and try again.  Missing items: "+
+                    missingAssets.toString().replaceAll("(^\\[|\\]$)", ""));
             return;
         }
     }
@@ -373,18 +377,19 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
     }
 
     // Checks to see that one found and one not found image has been downloaded for each target
-    private boolean validateRequiredAssetsPresent() {
+    private List<String> getMissingAssetList() {
         Log.d(TAG, "Validating required assets are present");
+        ArrayList<String> missingAssets = new ArrayList<String>();
         boolean missing = false;
         for (MuseumItem museumItem : museum.getItemList()) {
             if (remoteAssetCache.getImageByName("item" + museumItem.getId()) == null) {
-                missing = true;
+                missingAssets.add("image for item "+museumItem.getId());
             }
             if (remoteAssetCache.getHtmlContentByName("item" + museumItem.getId() + "_html") == null) {
-                missing = true;
+                missingAssets.add("html for item "+museumItem.getId());
             }
         }
-        return !missing;
+        return missingAssets;
     }
 
     /*
