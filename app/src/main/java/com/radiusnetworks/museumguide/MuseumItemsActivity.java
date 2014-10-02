@@ -291,7 +291,7 @@ public class MuseumItemsActivity extends FragmentActivity {
     public void recalculateNextItem(VisibleMuseumItems visibleMuseumItems) {
         String lastItemId = itemStack.empty() ? null : itemStack.peek();
         Log.d(TAG, "closest: ignoring " + lastItemId + " and " + currentItemId);
-        MuseumItem nextItem = visibleMuseumItems.calculateClosestItemWithExceptions(currentItemId, lastItemId);
+        MuseumItem nextItem = visibleMuseumItems.calculateClosestItemWithExceptions(currentItemId, lastItemId, nextItemId);
         showNextItem(nextItem == null ? null : nextItem.getId());
     }
 

@@ -84,7 +84,7 @@ public class MuseumGuideApplication extends Application implements ProximityKitN
         backgroundPowerSaver = new BackgroundPowerSaver(this);
         manager = ProximityKitManager.getInstanceForApplication(this);
         manager.setNotifier(this);
-        manager.getIBeaconManager().LOG_DEBUG = false;
+        manager.getIBeaconManager().setDebug(false);
 
         if (!new PropertiesFile().exists()) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);

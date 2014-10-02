@@ -35,6 +35,7 @@ import java.util.HashMap;
 public class VisibleMuseumItems {
     // determines how many subsequent closest detections must take place for
     private static final int MILLISECONDS_TO_TRACK_ITEMS = 10*1000;
+    private static final int MAX_DISTANCE_TO_SUGGEST = 5; // 5 meters
     private static final String TAG = "VisibleMuseumItems";
 
     private long oldestTrackedItemTime = -1;
@@ -48,10 +49,7 @@ public class VisibleMuseumItems {
         detectedMuseumItems.put(item.getId(), detectedItem);
     }
 
-    public MuseumItem calculateClosestItem() {
-        return calculateClosestItemWithExceptions(null, null);
-    }
-    public MuseumItem calculateClosestItemWithExceptions(final String blacklistedItemId1, final String blacklistedItemId2) {
+    public MuseumItem calculateClosestItemWithExceptions(final String blacklistedItemId1, final String blacklistedItemId2, final String currentNextItemId) {
         purgeOldItems();
         DetectedMuseumItem currentClosestItem = null;
         synchronized (detectedMuseumItems) {
@@ -61,8 +59,17 @@ public class VisibleMuseumItems {
                 }
                 else {
                     Log.d(TAG, "closest? itemId: "+item.getId()+", distance: "+item.getDistance());
-                    if (currentClosestItem == null || item.getDistance() < currentClosestItem.getDistance()) {
-                        currentClosestItem = item;
+                    if ((currentClosestItem == null) || item.getDistance() < currentClosestItem.getDistance()) {
+                        if (item.getDistance() < MAX_DISTANCE_TO_SUGGEST) {
+                            currentClosestItem = item;
+                        }
+                        else {
+                            // if this item isn't normally close enough to suggest, but it is the
+                            // current suggestion, keep allowoing it until something else is closer
+                            if (currentNextItemId != null && item.getId() == currentNextItemId) {
+                                currentClosestItem = item;
+                            }
+                        }
                     }
                 }
             }
